@@ -1,51 +1,216 @@
 # Day 37 - Containerize NovaMart Backend
 
-## Overview
+## Sprint
 
-Today, the NovaMart backend service was containerized using Docker.
+Sprint 0 — Project Initialization
 
-The goal was to package the FastAPI application, its dependencies, and runtime environment into a Docker image so the backend can run consistently across different environments.
+## Duration
 
----
+~2 Hours
 
-## What Was Implemented
+## Status
 
-- Created Dockerfile for NovaMart backend
-- Built backend Docker image
-- Installed application dependencies inside container
-- Started FastAPI backend using Docker container
-- Configured Docker port mapping
-- Verified backend API accessibility
+✅ Completed
 
----
+## Commit
 
-## Docker Image Creation
+feat(day-37): containerize NovaMart backend with Docker
 
-Created backend image:
+
+# Overview
+
+After containerizing the NovaMart frontend using Nginx, the next step was to containerize the backend service.
+
+The backend of NovaMart is built using FastAPI and provides APIs required by the frontend application.
+
+Previously, the backend application was running directly on the Ubuntu server using a Python virtual environment.
+
+In this phase, the application was converted into a Docker container so that:
+
+- The runtime environment becomes consistent
+- Dependencies are packaged with the application
+- Deployment becomes easier
+- The service can be moved between environments without manual setup
+
+
+# Previous State
+
+Before Docker:
+
+```
+Ubuntu Server
+
+Python Environment
+        |
+        |
+FastAPI Application
+        |
+        |
+Uvicorn Server
+```
+
+The application depended on the server's local Python installation and configuration.
+
+
+# New State
+
+After Docker implementation:
+
+```
+                  User
+                    |
+                    |
+            Docker Environment
+                    |
+                    |
+        +----------------------+
+        | NovaMart Backend     |
+        | Docker Container     |
+        |                      |
+        | FastAPI Application  |
+        | Uvicorn Server       |
+        | Port: 8000           |
+        +----------------------+
+```
+
+
+# Backend Application Structure
+
+Current backend structure:
+
+```
+app/backend/
+
+├── Dockerfile
+├── requirements.txt
+└── app
+    └── main.py
+```
+
+
+## Application Components
+
+
+### main.py
+
+Contains the FastAPI application.
+
+Responsibilities:
+
+- Creates API endpoints
+- Handles application requests
+- Provides health check endpoint
+
+
+Available endpoints:
+
+```
+GET /
+
+GET /health
+```
+
+
+### requirements.txt
+
+Defines Python dependencies required by the application.
+
+Current dependencies:
+
+```
+fastapi
+uvicorn
+```
+
+
+# Dockerfile Implementation
+
+The Dockerfile defines how the backend container is created.
+
+Dockerfile responsibilities:
+
+## 1. Select Base Image
+
+```dockerfile
+FROM python:3.12-slim
+```
+
+Uses a lightweight Python image to reduce container size.
+
+
+## 2. Set Working Directory
+
+```dockerfile
+WORKDIR /app
+```
+
+All application operations happen inside `/app`.
+
+
+## 3. Copy Dependencies
+
+```dockerfile
+COPY requirements.txt .
+```
+
+Copies dependency file into the container.
+
+
+## 4. Install Dependencies
+
+```dockerfile
+RUN pip install --no-cache-dir -r requirements.txt
+```
+
+Installs required Python packages.
+
+
+## 5. Copy Application Code
+
+```dockerfile
+COPY app/ ./app/
+```
+
+Copies backend source code into the container.
+
+
+## 6. Expose Application Port
+
+```dockerfile
+EXPOSE 8000
+```
+
+Documents that the application listens on port 8000.
+
+
+## 7. Start Application
+
+```dockerfile
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+Starts the FastAPI application using Uvicorn.
+
+
+# Building Docker Image
+
+Created backend Docker image:
 
 ```bash
 docker build -t novamart-backend:v0.1.0 .
 ```
 
-Generated image:
+
+Image created:
 
 ```
 novamart-backend:v0.1.0
 ```
 
-The image contains:
 
-- Python 3.12 runtime
-- FastAPI framework
-- Uvicorn server
-- NovaMart backend application
-- Required Python packages
+# Running Backend Container
 
----
-
-## Running Backend Container
-
-Started the backend container:
+Started the backend service:
 
 ```bash
 docker run -d \
@@ -54,32 +219,63 @@ docker run -d \
 novamart-backend:v0.1.0
 ```
 
-Port mapping:
+
+## Port Mapping
+
+Docker maps:
 
 ```
-Host Port 8000
+Host Machine
+
+192.168.64.4:8000
+
         |
+
         |
-Container Port 8000
+
+Container
+
+8000
 ```
 
-This allows external clients to communicate with the backend service running inside the container.
 
----
+This allows users outside the container to access the backend API.
 
-## Verification
 
-Checked running containers:
+# Container Verification
+
+
+Check running containers:
 
 ```bash
 docker ps
 ```
 
-Verified backend API:
+
+Expected:
+
+```
+novamart-backend
+
+STATUS:
+Up
+
+PORT:
+8000->8000
+```
+
+
+# API Testing
+
+
+## Root Endpoint
+
+Request:
 
 ```bash
 curl http://localhost:8000/
 ```
+
 
 Response:
 
@@ -91,11 +287,15 @@ Response:
 }
 ```
 
-Health check:
+
+## Health Endpoint
+
+Request:
 
 ```bash
 curl http://localhost:8000/health
 ```
+
 
 Response:
 
@@ -105,91 +305,133 @@ Response:
 }
 ```
 
----
 
-## Docker Concepts Learned
+# External Access Testing
 
-### Docker Image
+The backend was also tested from the Mac host machine.
 
-A Docker image is a packaged blueprint containing application code, dependencies, and runtime configuration.
+Request:
 
-### Docker Container
+```bash
+curl http://192.168.64.4:8000/
+```
 
-A container is a running instance of a Docker image.
 
-One image can be used to create multiple containers.
+Successful response confirmed:
 
-### Docker Port Mapping
+- VM networking works
+- Docker port mapping works
+- Backend service is reachable externally
 
-Port mapping connects a host machine port with a container port.
+
+# Troubleshooting Notes
+
+
+## Browser Testing Issue
+
+Chrome showed:
+
+```
+ERR_ADDRESS_UNREACHABLE
+```
+
+
+However:
+
+- curl from Mac worked
+- Safari worked successfully
+
+
+Conclusion:
+
+The issue was browser-specific and not related to Docker networking.
+
+
+# Docker Concepts Learned
+
+
+## Image vs Container
+
+Docker Image:
+
+A blueprint containing application code, dependencies, and configuration.
+
+
+Docker Container:
+
+A running instance created from an image.
+
+
+## Port Mapping
+
+Allows external access to services running inside containers.
 
 Example:
 
 ```
-Ubuntu Host:8000
+Host Port 8000
+
         |
-        |
-Docker Container:8000
+
+Container Port 8000
 ```
 
-### Docker Layer Caching
 
-Docker builds images in layers.
+## Docker Layer Caching
 
-If a layer has not changed, Docker reuses it during future builds, reducing build time.
+Docker builds images using layers.
 
----
+Unchanged layers are reused during rebuilds, making builds faster.
 
-## Troubleshooting Notes
 
-During implementation, the application was verified step by step:
+# KodeKloud Topics Covered
 
-- Checked Docker container status
-- Verified backend listening port
-- Tested API locally using curl
-- Tested API access from external machine
-- Confirmed Docker networking and port mapping were working correctly
+This implementation combines:
 
----
+- Day 38: Pull Docker Image
+- Day 41: Write a Dockerfile
+- Day 43: Docker Ports Mapping
+- Day 46: Deploy an App on Docker Containers
 
-## Current NovaMart Architecture
+
+# Current NovaMart Architecture
+
 
 ```
-                 User
-                  |
-                  |
-          Nginx Frontend Container
-             Port 8080
-                  |
-                  |
-           Docker Environment
-                  |
-                  |
-          FastAPI Backend Container
-             Port 8000
+                    User
+
+                     |
+
+                     |
+
+            Nginx Frontend Container
+
+                 Port 8080
+
+                     |
+
+                     |
+
+              Docker Environment
+
+                     |
+
+                     |
+
+            FastAPI Backend Container
+
+                 Port 8000
+
 ```
 
----
 
-## KodeKloud Topics Covered
+# Next Steps
 
-This implementation combined multiple Docker labs:
+Continue improving NovaMart platform:
 
-- Pull Docker Image
-- Write Dockerfile
-- Build Docker Image
-- Deploy Application on Docker Containers
-- Docker Port Mapping
-
----
-
-## Next Steps
-
-Upcoming NovaMart improvements:
-
-- Docker Exec Operations
-- Docker Networking
-- Docker Compose
-- Connect frontend and backend containers
-- Database container integration
-- CI/CD automation
+1. Docker Exec Operations
+2. Docker Networking
+3. Docker Compose
+4. Connect frontend and backend containers
+5. Add database service
+6. Prepare application for Kubernetes deployment
