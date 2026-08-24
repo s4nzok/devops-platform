@@ -1,3 +1,22 @@
-function showMessage() {
-    alert("Welcome to NovaMart! 🚀\n\nThis application is running inside an Nginx container managed as part of a DevOps portfolio project.");
+
+async function showMessage() {
+    try {
+        const response = await fetch("/api/health");
+
+        if (!response.ok) {
+            throw new Error("Backend request failed");
+        }
+
+        const data = await response.json();
+
+        alert(
+            "Welcome to NovaMart! 🚀\n\n" +
+            "Backend Status: " + data.status
+        );
+    } catch (error) {
+        alert(
+            "Unable to connect to NovaMart backend.\n\n" +
+            error.message
+        );
+    }
 }
