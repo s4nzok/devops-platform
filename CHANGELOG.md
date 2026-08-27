@@ -80,3 +80,31 @@ All notable changes to this project will be documented in this file.
 - Database integration
 - Persistent storage
 - Complete application stack management
+
+
+
+## Day 39 - Container Debugging and Repository Cleanup
+
+#### Added
+
+- `/proc`-based process inspection workflow for debugging minimal containers without `ps` or `curl`.
+
+#### Fixed
+
+- Removed `app/backend/.venv` from Git tracking — was committed by mistake and bloating the repository. Added `.venv/` to `.gitignore`.
+
+#### Verified
+
+- Backend container health via internal `/health` check (Python, no `curl` needed).
+- Frontend and backend network attachment to `novamart-network`, confirming reverse proxy routing is correctly configured.
+
+#### Concepts Learned
+
+- `docker exec` vs `docker attach`
+- Debugging trade-offs of minimal/slim container images
+- Safely untracking files from Git with `--cached`
+
+#### Next
+
+- Environment-variable-based backend configuration
+- Docker Compose
