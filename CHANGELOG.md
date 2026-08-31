@@ -73,17 +73,9 @@ All notable changes to this project will be documented in this file.
 - VM networking
 - Docker image versioning
 
-#### Next
-
-- Docker Compose
-- Environment configuration
-- Database integration
-- Persistent storage
-- Complete application stack management
 
 
-
-## Day 39 - Container Debugging and Repository Cleanup
+### Day 39 - Container Debugging and Repository Cleanup
 
 #### Added
 
@@ -104,7 +96,36 @@ All notable changes to this project will be documented in this file.
 - Debugging trade-offs of minimal/slim container images
 - Safely untracking files from Git with `--cached`
 
+### Day 40 — Docker Compose Migration
+
+#### Added
+
+- Created `app/docker-compose.yml` to orchestrate the frontend and backend services.
+- Defined `frontend` and `novamart-backend` as Compose services with build contexts pointing to their respective directories.
+- Replaced manual `docker network create` and multi-step `docker run` commands with a single `docker compose up -d` workflow.
+
+#### Changed
+
+- Backend service explicitly named `novamart-backend` in Compose to preserve compatibility with the hardcoded `proxy_pass` hostname in the Nginx configuration.
+
+#### Validation
+
+- Validated Compose syntax using `docker compose config` before starting containers.
+- Verified both containers reach `Up` status via `docker compose ps`.
+- Verified backend health directly: `curl localhost:8000/health` → `{"status":"healthy"}`.
+- Verified frontend-to-backend proxying through Compose's default network: `curl localhost:8080/api/health` → `{"status":"healthy"}`.
+
+#### Concepts Learned
+
+- Docker Compose replaces manual network creation with an automatic default network shared by all services.
+- Service names function as internal DNS hostnames — matching hardcoded config elsewhere is a hard requirement, not a cosmetic choice.
+- YAML indentation is structural, not cosmetic — inconsistent indentation can silently break configuration.
+- `docker compose config` validates and resolves the compose file without starting containers, catching errors early.
+
 #### Next
 
 - Environment-variable-based backend configuration
-- Docker Compose
+- `.env` files and Compose environment separation (dev/staging/prod)
+- Database integration
+- Persistent storage
+
